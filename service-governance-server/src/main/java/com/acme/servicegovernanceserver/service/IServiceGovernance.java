@@ -14,5 +14,5 @@ public interface IServiceGovernance {
 
     void start(MachineInfoParam machineInfo) throws ServiceGovernanceException, TException;
 
-    void heartbeat(MachineInfoParam machineInfo) throws ServiceGovernanceException, TException;
+    void heartbeat(MachineInfoParam machineInfo);
 }

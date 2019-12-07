@@ -12,11 +12,7 @@ import org.apache.thrift.TException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +25,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ServiceGovernanceImpl implements IServiceGovernance {
+
+    private final static int HEARTBEAT_TIME = 15000; // ms
 
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
     {
@@ -54,37 +52,46 @@ public class ServiceGovernanceImpl implements IServiceGovernance {
     }
 
     @Override
-    public void heartbeat(MachineInfoParam machineInfo) throws ServiceGovernanceException, TException {
-
+    public void heartbeat(MachineInfoParam machineInfo) {
+        try {
+            List<MachineDomain> machineDomains = memoryStorage.getList(machineInfo.getAppKey());
+            machineDomains.forEach(v -> {
+                v.setStatus(1);
+                v.setUpdateTime(System.currentTimeMillis());
+            });
+            memoryStorage.update(machineDomains);
+        } catch (ServiceGovernanceException e) {
+            e.printStackTrace();
+        }
     }
 
     private MachineInfoResult buildMachineInfoResult(List<MachineDomain> domainList) {
         return new MachineInfoResult(domainList.stream().map(v -> new MachineInfo(v.getIp(), v.getPort())).collect(Collectors.toList()));
     }
 
-    private MachineDomain buildMachineDomain(MachineInfoParam param){
-        MachineDomain domain = new MachineDomain();
-        domain.setAppKey(param.getAppKey());
-        domain.setIp(param.getIp());
-        domain.setPort(param.getPort());
-        domain.setCreateTime(System.currentTimeMillis());
-        domain.setUpdateTime(System.currentTimeMillis());
-        domain.setStatus(1);
-        return domain;
+    private List<MachineDomain> buildMachineDomain(MachineInfoParam param){
+        String appKey = param.getAppKey();
+        return param.getParams().stream().map(v -> {
+            MachineDomain domain = new MachineDomain();
+            domain.setAppKey(appKey);
+            domain.setIp(v.getIp());
+            domain.setPort(v.getPort());
+            domain.setCreateTime(System.currentTimeMillis());
+            domain.setUpdateTime(System.currentTimeMillis());
+            domain.setStatus(1);
+            return domain;
+        }).collect(Collectors.toList());
     }
 
     private void checkAlive() {
         try {
             List<MachineDomain> domains = memoryStorage.getAll();
+            long curTime = System.currentTimeMillis();
             for (MachineDomain domain : domains){
-                Socket socket = new Socket();
-                try {
-                    socket.connect(new InetSocketAddress(domain.getIp(), domain.getPort()));
-                } catch (IOException e) {
-                    log.info("checkAlive, offline:{}", domain);
+                if(curTime - domain.getUpdateTime() > HEARTBEAT_TIME){
                     domain.setStatus(0);
-                    domain.setUpdateTime(System.currentTimeMillis());
-                    memoryStorage.update(domain);
+                    memoryStorage.update(Collections.singletonList(domain));
+                    log.warn("checkAlive -> curTime:{} -> offline:{}", curTime, domain);
                 }
             }
         } catch (Throwable e){

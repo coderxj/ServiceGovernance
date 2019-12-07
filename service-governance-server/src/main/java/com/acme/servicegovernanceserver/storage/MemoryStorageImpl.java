@@ -21,24 +21,28 @@ public class MemoryStorageImpl implements IStorage {
     private final Map<String, List<MachineDomain>> domainMap = new ConcurrentHashMap<>();
 
     @Override
-    public void save(MachineDomain domain){
-        if(!domainMap.containsKey(domain.getAppKey())){
-            domainMap.put(domain.getAppKey(), new ArrayList<>());
-            domainMap.get(domain.getAppKey()).add(domain);
-        } else {
-            add(domain);
+    public void save(List<MachineDomain> domains){
+        for (MachineDomain domain : domains){
+            if(!domainMap.containsKey(domain.getAppKey())){
+                domainMap.put(domain.getAppKey(), new ArrayList<>());
+                domainMap.get(domain.getAppKey()).add(domain);
+            } else {
+                add(domain);
+            }
         }
     }
 
     @Override
-    public void update(MachineDomain domain) throws ServiceGovernanceException {
-        if(!domainMap.containsKey(domain.getAppKey())){
-            throw new ServiceGovernanceException(1, "未发现该服务的机器");
+    public void update(List<MachineDomain> domains) throws ServiceGovernanceException {
+        for (MachineDomain domain : domains){
+            if(!domainMap.containsKey(domain.getAppKey())){
+                throw new ServiceGovernanceException(1, "未发现该服务的机器");
+            }
+            if(StringUtils.isEmpty(domain.getIp()) || StringUtils.isEmpty(domain.getPort())){
+                throw new ServiceGovernanceException(2, "IP或PORT不能为空");
+            }
+            add(domain);
         }
-        if(StringUtils.isEmpty(domain.getIp()) || StringUtils.isEmpty(domain.getPort())){
-            throw new ServiceGovernanceException(2, "IP或PORT不能为空");
-        }
-        add(domain);
     }
 
     @Override

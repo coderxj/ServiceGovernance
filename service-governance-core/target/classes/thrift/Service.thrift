@@ -11,6 +11,6 @@ service TServiceGovernance {
     //服务启动，发送机器信息到服务治理中心
     void start(1:Dto.MachineInfoParam machineInfo) throws (1:Exception.ServiceGovernanceException ex);
 
-    //维持心跳，用于随时移除服务机器信息
+    //发送心跳信息
     void heartbeat(1:Dto.MachineInfoParam machineInfo) throws (1:Exception.ServiceGovernanceException ex);
 }

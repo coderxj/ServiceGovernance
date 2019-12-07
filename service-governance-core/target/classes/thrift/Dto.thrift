@@ -13,6 +13,5 @@ struct MachineInfo {
 
 struct MachineInfoParam {
     1:string appKey
-    2:string ip;
-    3:i32 port;
+    2:list<MachineInfo> params;
 }

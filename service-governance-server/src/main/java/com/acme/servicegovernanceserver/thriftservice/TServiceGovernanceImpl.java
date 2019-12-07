@@ -1,6 +1,5 @@
 package com.acme.servicegovernanceserver.thriftservice;
 
-import com.acme.servicegovernanceserver.service.IServiceGovernance;
 import com.acme.servicegovernanceserver.service.ServiceGovernanceImpl;
 import com.acme.sg.Dto.MachineInfoParam;
 import com.acme.sg.Dto.MachineInfoResult;
@@ -10,7 +9,6 @@ import org.apache.thrift.TException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 
 /**
  * @author acme
