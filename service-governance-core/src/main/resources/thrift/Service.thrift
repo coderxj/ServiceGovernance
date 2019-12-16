@@ -13,3 +13,4 @@ service TServiceGovernance {
 
     //发送心跳信息
     void heartbeat(1:Dto.MachineInfoParam machineInfo) throws (1:Exception.ServiceGovernanceException ex);
+}
